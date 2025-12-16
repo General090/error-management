@@ -1,135 +1,204 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const readings = [
-  {
-    created_at: "2025-12-15 12:09:10.713699",
-    id: 200,
-    dht_temp_c: 28.9,
-    dht_rh: 75.0,
-    bme_temp_c: 29.85,
-    bme_rh: 100.0,
-    pressure_hpa: 1003.21,
-    rh_error_pred: -2.8062710762023926,
-  },
-  {
-    created_at: "2025-12-15 12:09:03.248696",
-    id: 199,
-    dht_temp_c: 28.9,
-    dht_rh: 75.0,
-    bme_temp_c: 29.84,
-    bme_rh: 100.0,
-    pressure_hpa: 1003.21,
-    rh_error_pred: -2.8062710762023926,
-  },
-  {
-    created_at: "2025-12-15 12:08:54.138979",
-    id: 198,
-    dht_temp_c: 28.9,
-    dht_rh: 75.0,
-    bme_temp_c: 29.84,
-    bme_rh: 100.0,
-    pressure_hpa: 1003.18,
-    rh_error_pred: -2.8062710762023926,
-  },
-];
+const BASE_URL = "https://ai-powered-sensor-automation.onrender.com";
 
 export default function LiveSensorDashboard() {
+  const [readings, setReadings] = useState([]);
+  const [summary, setSummary] = useState([]);
+  const [prediction, setPrediction] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [loadingReadings, setLoadingReadings] = useState(true);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingPrediction, setLoadingPrediction] = useState(true);
+
+  const fetchReadings = async () => {
+    try {
+      setLoadingReadings(true);
+      const res = await fetch(`${BASE_URL}/new-reading`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+      const data = await res.json();
+      setReadings(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch readings:", err);
+      setReadings([]);
+    } finally {
+      setLoadingReadings(false);
+    }
+  };
+
+  const fetchSummary = async () => {
+    try {
+      setLoadingSummary(true);
+      const res = await fetch(`${BASE_URL}/summary?limit=5`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      setSummary(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to fetch summary:", err);
+      setSummary([]);
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
+  const fetchPrediction = async () => {
+    try {
+      setLoadingPrediction(true);
+      const res = await fetch(`${BASE_URL}/predict`, { method: "POST" });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      setPrediction(data);
+    } catch (err) {
+      console.error("Failed to fetch prediction:", err);
+      setPrediction(null);
+    } finally {
+      setLoadingPrediction(false);
+    }
+  };
+
+
+  useEffect(() => {
+    fetchReadings();
+    fetchSummary();
+    fetchPrediction();
+
+    const interval = setInterval(() => {
+      fetchReadings();
+      fetchSummary();
+      fetchPrediction();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="h-screen bg-slate-100 p-6">
-      <h1 className="mb-6 text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-tight border-l-4 border-blue-500 pl-4 py-2">Real time monitoring and error management system</h1>
+    <div className="h-screen bg-slate-100 p-4 md:p-6">
+      {/* HEADER */}
+      <h1 className="text-2xl md:text-3xl font-semibold text-slate-800 border-l-4 border-blue-600 pl-4 mb-6">
+        Real-Time Monitoring & Error Management System
+      </h1>
 
-      <div className="grid grid-cols-12 gap-6 h-full">
-
-        {/* LEFT — TABLE */}
-        <div className="col-span-9 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gradient-to-r from-slate-700 to-slate-800 border-b border-slate-900">
-              <tr className="text-left text-white text-xs font-semibold uppercase tracking-wider">
-                <th className="px-4 py-3">Created At</th>
-                <th className="px-4 py-3">ID</th>
-                <th className="px-4 py-3">DHT_TEMP_C</th>
-                <th className="px-4 py-3">DHT_RH</th>
-                <th className="px-4 py-3">BME_TEMP_C</th>
-                <th className="px-4 py-3">BME_RH</th>
-                <th className="px-4 py-3">Pressure_hPa</th>
-                <th className="px-4 py-3">RH_ERROR_pred</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {readings.map((row, index) => {
-                const isActive = selectedRow?.id === row.id;
-
-                return (
-                  <tr
-                    key={index}
-                    onClick={() => setSelectedRow(row)}
-                    className={`cursor-pointer transition ${
-                      isActive ? "bg-blue-50" : "hover:bg-slate-50"
-                    } border-b border-slate-100`}
-                  >
-                    <td className="px-4 py-3 font-medium text-slate-700">
-                      {row.created_at}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">{row.id}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.dht_temp_c}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.dht_rh}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.bme_temp_c}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.bme_rh}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.pressure_hpa}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {row.rh_error_pred}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* RIGHT — DETAILS PANEL */}
-        <div className="col-span-3 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          {!selectedRow ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm">
-              <span className="mb-2 text-base">📊</span>
-              Select a row to view details
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100%-60px)]">
+        {/* LEFT — SENSOR TABLE */}
+        <div className="md:col-span-9 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+          {loadingReadings ? (
+            <div className="flex items-center justify-center h-64 text-slate-400">
+              Loading sensor readings...
+            </div>
+          ) : readings.length === 0 ? (
+            <div className="flex items-center justify-center h-64 text-slate-400">
+              No sensor readings available
             </div>
           ) : (
-            <div>
-              <h2 className="text-lg font-semibold text-slate-800 mb-6">
-                Sensor Reading Details
-              </h2>
+            <table className="w-full text-sm min-w-[600px]">
+              <thead className="sticky top-0 bg-slate-200 border-b border-slate-300">
+                <tr className="text-left text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                  <th className="px-4 py-3">Created At</th>
+                  <th className="px-4 py-3">ID</th>
+                  <th className="px-4 py-3">DHT Temp</th>
+                  <th className="px-4 py-3">DHT RH</th>
+                  <th className="px-4 py-3">BME Temp</th>
+                  <th className="px-4 py-3">BME RH</th>
+                  <th className="px-4 py-3">Pressure</th>
+                  <th className="px-4 py-3">RH Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {readings.map((row) => {
+                  const error = Math.abs(row.RH_ERROR_pred);
+                  const isActive = selectedRow?.id === row.id;
 
-              <div className="space-y-4 text-sm">
-                <Detail label="Created At" value={selectedRow.created_at} />
-                <Detail label="ID" value={selectedRow.id} />
-                <Detail label="DHT Temp (°C)" value={selectedRow.dht_temp_c} />
-                <Detail label="DHT RH (%)" value={selectedRow.dht_rh} />
-                <Detail label="BME Temp (°C)" value={selectedRow.bme_temp_c} />
-                <Detail label="BME RH (%)" value={selectedRow.bme_rh} />
-                <Detail label="Pressure (hPa)" value={selectedRow.pressure_hpa} />
-                <Detail
-                  label="RH Error Prediction"
-                  value={selectedRow.rh_error_pred}
-                />
-              </div>
-            </div>
+                  return (
+                    <tr
+                      key={row.id}
+                      onClick={() => setSelectedRow(row)}
+                      className={`cursor-pointer transition ${
+                        isActive ? "bg-blue-50" : "hover:bg-slate-50"
+                      } border-b border-slate-200`}
+                    >
+                      <td className="px-4 py-3 text-slate-700 font-medium">
+                        {new Date(row.created_at).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3">{row.id}</td>
+                      <td className="px-4 py-3">{row.DHT_TEMP_C}</td>
+                      <td className="px-4 py-3">{row.DHT_RH}</td>
+                      <td className="px-4 py-3">{row.BME_TEMP_C}</td>
+                      <td className="px-4 py-3">{row.BME_RH}</td>
+                      <td className="px-4 py-3">{row.Pressure_hPa}</td>
+                      <td
+                        className={`px-4 py-3 font-semibold ${
+                          error > 5
+                            ? "text-red-600"
+                            : error > 2
+                            ? "text-amber-600"
+                            : "text-emerald-600"
+                        }`}
+                      >
+                        {row.RH_ERROR_pred.toFixed(2)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
 
-      </div>
-    </div>
-  );
-}
+        {/* RIGHT — ERROR SUMMARY + PREDICTION */}
+        <div className="md:col-span-3 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-6 flex flex-col gap-4">
+          {/* ERROR SUMMARY */}
+          <h2 className="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">
+            Error Summary
+          </h2>
+          {loadingSummary ? (
+            <p className="text-sm text-slate-400">Loading summary...</p>
+          ) : summary.length === 0 ? (
+            <p className="text-sm text-slate-400">No errors detected</p>
+          ) : (
+            <ul className="space-y-3">
+              {summary.map((item, index) => (
+                <li
+                  key={index}
+                  className="p-3 rounded-md bg-slate-50 border border-slate-200"
+                >
+                  <p className="text-sm font-medium text-slate-700">
+                    Sensor ID: {item.id}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    RH Error:{" "}
+                    <span className="font-semibold text-red-600">
+                      {item.RH_ERROR_pred.toFixed(2)}
+                    </span>
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
 
-/* Reusable detail row */
-function Detail({ label, value }) {
-  return (
-    <div className="flex justify-between border-b border-slate-100 pb-2">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-800">{value}</span>
+          {/* PREDICTION */}
+          <div className="mt-auto p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <h3 className="text-sm font-semibold text-blue-700 mb-1">
+              Predicted RH Error
+            </h3>
+            {loadingPrediction ? (
+              <p className="text-sm text-blue-400">Loading prediction...</p>
+            ) : prediction ? (
+              <p
+                className={`text-lg font-bold ${
+                  prediction.RH_ERROR_pred > 5
+                    ? "text-red-600"
+                    : "text-blue-800"
+                }`}
+              >
+                {prediction.RH_ERROR_pred?.toFixed(2) ?? prediction.toFixed(2)}
+              </p>
+            ) : (
+              <p className="text-sm text-blue-400">No prediction available</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
