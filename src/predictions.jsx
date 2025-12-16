@@ -163,7 +163,7 @@ export default function LiveSensorDashboard() {
           {/* PREDICTION */}
           <div className="mt-auto p-3 bg-blue-50 border border-blue-200 rounded-md">
             <h3 className="text-sm font-semibold text-blue-700 mb-1">
-              Predicted RH Error
+              Awaiting Response...
             </h3>
             {loadingPrediction ? (
               <p className="text-sm text-blue-400">Awaiting response...</p>
