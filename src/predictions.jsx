@@ -7,29 +7,22 @@ export default function LiveSensorDashboard() {
   const [summary, setSummary] = useState([]);
   const [prediction, setPrediction] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [loadingReadings, setLoadingReadings] = useState(true);
-  const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingPrediction, setLoadingPrediction] = useState(true);
 
   const fetchReadings = async () => {
     try {
-      setLoadingReadings(true);
       const res = await fetch(`${BASE_URL}/new-reading`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
       const data = await res.json();
       setReadings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch readings:", err);
       setReadings([]);
-    } finally {
-      setLoadingReadings(false);
     }
   };
 
   const fetchSummary = async () => {
     try {
-      setLoadingSummary(true);
       const res = await fetch(`${BASE_URL}/summary?limit=5`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
@@ -37,8 +30,6 @@ export default function LiveSensorDashboard() {
     } catch (err) {
       console.error("Failed to fetch summary:", err);
       setSummary([]);
-    } finally {
-      setLoadingSummary(false);
     }
   };
 
@@ -56,7 +47,6 @@ export default function LiveSensorDashboard() {
       setLoadingPrediction(false);
     }
   };
-
 
   useEffect(() => {
     fetchReadings();
@@ -82,11 +72,7 @@ export default function LiveSensorDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100%-60px)]">
         {/* LEFT — SENSOR TABLE */}
         <div className="md:col-span-9 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-          {loadingReadings ? (
-            <div className="flex items-center justify-center h-64 text-slate-400">
-              Loading sensor readings...
-            </div>
-          ) : readings.length === 0 ? (
+          {readings.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-slate-400">
               No sensor readings available
             </div>
@@ -151,9 +137,7 @@ export default function LiveSensorDashboard() {
           <h2 className="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">
             Error Summary
           </h2>
-          {loadingSummary ? (
-            <p className="text-sm text-slate-400">Loading summary...</p>
-          ) : summary.length === 0 ? (
+          {summary.length === 0 ? (
             <p className="text-sm text-slate-400">No errors detected</p>
           ) : (
             <ul className="space-y-3">
@@ -182,7 +166,7 @@ export default function LiveSensorDashboard() {
               Predicted RH Error
             </h3>
             {loadingPrediction ? (
-              <p className="text-sm text-blue-400">Loading prediction...</p>
+              <p className="text-sm text-blue-400">Awaiting response...</p>
             ) : prediction ? (
               <p
                 className={`text-lg font-bold ${
