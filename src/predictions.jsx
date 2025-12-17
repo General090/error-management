@@ -75,52 +75,77 @@ export default function LiveSensorDashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100%-60px)]">
         {/* LEFT — SENSOR TABLE */}
-        <div className="md:col-span-9 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        {/* LEFT — SENSOR TABLE */}
+        <div className="md:col-span-9 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm">
           {readings.length === 0 ? (
             <div className="flex items-center justify-center h-64 text-slate-400">
               No sensor readings available
             </div>
           ) : (
-            <table className="w-full text-sm min-w-[600px]">
-              <thead className="sticky top-0 bg-slate-200 border-b border-slate-300">
-                <tr className="text-left text-slate-700 text-xs font-semibold uppercase tracking-wide">
-                  <th className="px-4 py-3">Created At</th>
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">DHT Temp</th>
-                  <th className="px-4 py-3">DHT RH</th>
-                  <th className="px-4 py-3">BME Temp</th>
-                  <th className="px-4 py-3">BME RH</th>
-                  <th className="px-4 py-3">Pressure</th>
-                  <th className="px-4 py-3">RH Error</th>
-                </tr>
-              </thead>
-              <tbody>
-                {readings.map((row) => {
-                  const error = Math.abs(row.RH_ERROR_pred);
-                  const isActive = selectedRow?.id === row.id;
-                  return (
-                    <tr
-                      key={row.id}
-                      onClick={() => setSelectedRow(row)}
-                      className={`cursor-pointer transition ${isActive ? "bg-blue-50" : "hover:bg-slate-50"} border-b border-slate-200`}
-                    >
-                      <td className="px-4 py-3 text-slate-700 font-medium">
-                        {new Date(row.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3">{row.id}</td>
-                      <td className="px-4 py-3">{row.DHT_TEMP_C}</td>
-                      <td className="px-4 py-3">{row.DHT_RH}</td>
-                      <td className="px-4 py-3">{row.BME_TEMP_C}</td>
-                      <td className="px-4 py-3">{row.BME_RH}</td>
-                      <td className="px-4 py-3">{row.Pressure_hPa}</td>
-                      <td className={`px-4 py-3 font-semibold ${error > 5 ? "text-red-600" : error > 2 ? "text-amber-600" : "text-emerald-600"}`}>
-                        {row.RH_ERROR_pred.toFixed(2)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm min-w-[600px]">
+                <thead className="sticky top-0 bg-slate-200 border-b border-slate-300">
+                  <tr className="text-left text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                    <th className="px-4 py-3">Created At</th>
+                    <th className="px-4 py-3">ID</th>
+                    <th className="px-4 py-3">DHT Temp</th>
+                    <th className="px-4 py-3">DHT RH</th>
+                    <th className="px-4 py-3">BME Temp</th>
+                    <th className="px-4 py-3">BME RH</th>
+                    <th className="px-4 py-3">Pressure</th>
+                    <th className="px-4 py-3">RH Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {readings.map((row) => {
+                    const error = Math.abs(row.RH_ERROR_pred);
+                    const isActive = selectedRow?.id === row.id;
+                    return (
+                      <tr
+                        key={row.id}
+                        onClick={() => setSelectedRow(row)}
+                        className={`cursor-pointer transition ${
+                          isActive ? "bg-blue-50" : "hover:bg-slate-50"
+                        } border-b border-slate-200`}
+                      >
+                        <td className="px-4 py-3 text-slate-700 font-medium whitespace-nowrap">
+                          {new Date(row.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.id}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.DHT_TEMP_C}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.DHT_RH}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.BME_TEMP_C}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.BME_RH}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.Pressure_hPa}
+                        </td>
+                        <td
+                          className={`px-4 py-3 font-semibold whitespace-nowrap ${
+                            error > 5
+                              ? "text-red-600"
+                              : error > 2
+                              ? "text-amber-600"
+                              : "text-emerald-600"
+                          }`}
+                        >
+                          {row.RH_ERROR_pred.toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
@@ -138,10 +163,14 @@ export default function LiveSensorDashboard() {
                   key={index}
                   className="p-3 rounded-md bg-red-50 border border-red-300 text-red-700 font-medium break-words shadow-sm"
                 >
-                  {typeof item === "string" ? item : item.message ? item.message : (
+                  {typeof item === "string" ? (
+                    item
+                  ) : item.message ? (
+                    item.message
+                  ) : (
                     <>
-                      <p>Sensor ID: {item.id || 'N/A'}</p>
-                      <p>RH Error: {item.RH_ERROR_pred?.toFixed(2) || 'N/A'}</p>
+                      <p>Sensor ID: {item.id || "N/A"}</p>
+                      <p>RH Error: {item.RH_ERROR_pred?.toFixed(2) || "N/A"}</p>
                     </>
                   )}
                 </li>
@@ -156,7 +185,13 @@ export default function LiveSensorDashboard() {
             {loadingPrediction ? (
               <p className="text-sm text-blue-400">Awaiting response...</p>
             ) : prediction ? (
-              <p className={`text-lg font-bold ${prediction.RH_ERROR_pred > 5 ? "text-red-600" : "text-blue-800"}`}>
+              <p
+                className={`text-lg font-bold ${
+                  prediction.RH_ERROR_pred > 5
+                    ? "text-red-600"
+                    : "text-blue-800"
+                }`}
+              >
                 {prediction.RH_ERROR_pred?.toFixed(2) ?? prediction.toFixed(2)}
               </p>
             ) : (
