@@ -48,19 +48,19 @@ export default function LiveSensorDashboard() {
     }
   };
 
-  // useEffect(() => {
-  //   fetchReadings();
-  //   fetchSummary();
-  //   fetchPrediction();
+  useEffect(() => {
+    fetchReadings();
+    fetchSummary();
+    fetchPrediction();
 
-  //   const interval = setInterval(() => {
-  //     fetchReadings();
-  //     fetchSummary();
-  //     fetchPrediction();
-  //   }, 5000);
+    const interval = setInterval(() => {
+      fetchReadings();
+      fetchSummary();
+      fetchPrediction();
+    }, 5000);
 
-  //   return () => clearInterval(interval);
-  // }, []);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="h-screen bg-slate-100 p-4 md:p-6">
