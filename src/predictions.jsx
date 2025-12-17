@@ -14,10 +14,9 @@ export default function LiveSensorDashboard() {
       const res = await fetch(`${BASE_URL}/new-reading`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      setReadings(Array.isArray(data) ? data : []);
+      if (Array.isArray(data) && data.length > 0) setReadings(data);
     } catch (err) {
-      console.error("Failed to fetch readings:", err);
-      setReadings([]);
+      console.error("Failed to fetch readings — keeping old data");
     }
   };
 
@@ -26,10 +25,16 @@ export default function LiveSensorDashboard() {
       const res = await fetch(`${BASE_URL}/summary?limit=5`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      setSummary(Array.isArray(data) ? data : []);
+
+      if (Array.isArray(data) && data.length > 0) {
+        setSummary(data);
+      } else if (typeof data === "string" && data.trim().length > 0) {
+        setSummary([{ message: data }]);
+      } else if (data && Object.keys(data).length > 0) {
+        setSummary([data]);
+      }
     } catch (err) {
-      console.error("Failed to fetch summary:", err);
-      setSummary([]);
+      console.error("Failed to fetch summary — keeping old data");
     }
   };
 
@@ -64,7 +69,6 @@ export default function LiveSensorDashboard() {
 
   return (
     <div className="h-screen bg-slate-100 p-4 md:p-6">
-      {/* HEADER */}
       <h1 className="text-2xl md:text-3xl font-semibold text-slate-800 border-l-4 border-blue-600 pl-4 mb-6">
         Real-Time Monitoring & Error Management System
       </h1>
@@ -94,14 +98,11 @@ export default function LiveSensorDashboard() {
                 {readings.map((row) => {
                   const error = Math.abs(row.RH_ERROR_pred);
                   const isActive = selectedRow?.id === row.id;
-
                   return (
                     <tr
                       key={row.id}
                       onClick={() => setSelectedRow(row)}
-                      className={`cursor-pointer transition ${
-                        isActive ? "bg-blue-50" : "hover:bg-slate-50"
-                      } border-b border-slate-200`}
+                      className={`cursor-pointer transition ${isActive ? "bg-blue-50" : "hover:bg-slate-50"} border-b border-slate-200`}
                     >
                       <td className="px-4 py-3 text-slate-700 font-medium">
                         {new Date(row.created_at).toLocaleString()}
@@ -112,15 +113,7 @@ export default function LiveSensorDashboard() {
                       <td className="px-4 py-3">{row.BME_TEMP_C}</td>
                       <td className="px-4 py-3">{row.BME_RH}</td>
                       <td className="px-4 py-3">{row.Pressure_hPa}</td>
-                      <td
-                        className={`px-4 py-3 font-semibold ${
-                          error > 5
-                            ? "text-red-600"
-                            : error > 2
-                            ? "text-amber-600"
-                            : "text-emerald-600"
-                        }`}
-                      >
+                      <td className={`px-4 py-3 font-semibold ${error > 5 ? "text-red-600" : error > 2 ? "text-amber-600" : "text-emerald-600"}`}>
                         {row.RH_ERROR_pred.toFixed(2)}
                       </td>
                     </tr>
@@ -133,7 +126,6 @@ export default function LiveSensorDashboard() {
 
         {/* RIGHT — ERROR SUMMARY + PREDICTION */}
         <div className="md:col-span-3 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-6 flex flex-col gap-4">
-          {/* ERROR SUMMARY */}
           <h2 className="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">
             Error Summary
           </h2>
@@ -144,23 +136,19 @@ export default function LiveSensorDashboard() {
               {summary.map((item, index) => (
                 <li
                   key={index}
-                  className="p-3 rounded-md bg-slate-50 border border-slate-200"
+                  className="p-3 rounded-md bg-red-50 border border-red-300 text-red-700 font-medium break-words shadow-sm"
                 >
-                  <p className="text-sm font-medium text-slate-700">
-                    Sensor ID: {item.id}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    RH Error:{" "}
-                    <span className="font-semibold text-red-600">
-                      {item.RH_ERROR_pred.toFixed(2)}
-                    </span>
-                  </p>
+                  {typeof item === "string" ? item : item.message ? item.message : (
+                    <>
+                      <p>Sensor ID: {item.id || 'N/A'}</p>
+                      <p>RH Error: {item.RH_ERROR_pred?.toFixed(2) || 'N/A'}</p>
+                    </>
+                  )}
                 </li>
               ))}
             </ul>
           )}
 
-          {/* PREDICTION */}
           <div className="mt-auto p-3 bg-blue-50 border border-blue-200 rounded-md">
             <h3 className="text-sm font-semibold text-blue-700 mb-1">
               Awaiting Response...
@@ -168,17 +156,11 @@ export default function LiveSensorDashboard() {
             {loadingPrediction ? (
               <p className="text-sm text-blue-400">Awaiting response...</p>
             ) : prediction ? (
-              <p
-                className={`text-lg font-bold ${
-                  prediction.RH_ERROR_pred > 5
-                    ? "text-red-600"
-                    : "text-blue-800"
-                }`}
-              >
+              <p className={`text-lg font-bold ${prediction.RH_ERROR_pred > 5 ? "text-red-600" : "text-blue-800"}`}>
                 {prediction.RH_ERROR_pred?.toFixed(2) ?? prediction.toFixed(2)}
               </p>
             ) : (
-              <p className="text-sm text-blue-400">No prediction available</p>
+              <p className="text-sm text-blue-400">No response available</p>
             )}
           </div>
         </div>
