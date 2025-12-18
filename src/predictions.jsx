@@ -66,18 +66,26 @@ export default function LiveSensorDashboard() {
   };
 
   useEffect(() => {
+    // Initial fetch
     fetchReadings();
     fetchSummary();
     fetchPrediction();
-
-    const interval = setInterval(() => {
+  
+    const fastInterval = setInterval(() => {
       fetchReadings();
-      fetchSummary();
       fetchPrediction();
     }, 5000);
-
-    return () => clearInterval(interval);
+  
+    const summaryInterval = setInterval(() => {
+      fetchSummary();
+    }, 300000);
+  
+    return () => {
+      clearInterval(fastInterval);
+      clearInterval(summaryInterval);
+    };
   }, []);
+  
 
   return (
     <div className="h-screen bg-slate-100 p-4 md:p-6">
