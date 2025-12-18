@@ -24,15 +24,27 @@ export default function LiveSensorDashboard() {
     try {
       const res = await fetch(`${BASE_URL}/summary?limit=5`);
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
       const data = await res.json();
 
+      // ✅ Case 1: AI summary object
+      if (data?.summary) {
+        setSummary([
+          {
+            type: "ai-summary",
+            message: data.summary,
+          },
+        ]);
+        return;
+      }
+
+      // ✅ Case 2: Array of error objects
       if (Array.isArray(data) && data.length > 0) {
         setSummary(data);
-      } else if (typeof data === "string" && data.trim().length > 0) {
-        setSummary([{ message: data }]);
-      } else if (data && Object.keys(data).length > 0) {
-        setSummary([data]);
+        return;
       }
+
+      // Otherwise keep old summary
     } catch (err) {
       console.error("Failed to fetch summary — keeping old data");
     }
@@ -74,7 +86,6 @@ export default function LiveSensorDashboard() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[calc(100%-60px)]">
-        {/* LEFT — SENSOR TABLE */}
         {/* LEFT — SENSOR TABLE */}
         <div className="md:col-span-9 col-span-1 bg-white rounded-xl border border-slate-200 shadow-sm">
           {readings.length === 0 ? (
